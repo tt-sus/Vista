@@ -1,0 +1,37 @@
+.difference text {
+	font-family: sans-serif;
+	font-size: 40px;
+	}
+	
+.legend text {
+	font-family: sans-serif;
+	font-size: 10px;
+	font-weight: bold;
+	}
+
+.arc_segments text {
+	font-family: sans-serif;
+	font-size: 10px;
+	}
+
+.dountTitleText {
+	font-family: 'Segoe UI';
+	font-size: 20px;
+	fill: #bbb;
+	}
+
+.dountValueText {
+	fill: #444;
+	font-family: 'Segoe UI';
+	font-weight: bold;
+	font-size: 25px;
+	}
+
+.legend rect {
+		cursor: pointer;
+		stroke-width: .5;
+	}	
+
+rect.disabled {
+		fill: transparent !important;
+	}

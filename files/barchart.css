@@ -1,0 +1,10 @@
+
+.barchart rect {
+	stroke: black;
+	stroke-width:1;
+}
+
+.barChartText text {
+	font-family: sans-serif !important;
+	font-size: 10px !important;
+	}
