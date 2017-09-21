@@ -100,19 +100,19 @@ function drawPieChart(inputData, inputWidth, inputHeight, pieId, lInputWidth, lI
 			.attr("dy", ".35em")
 			.attr("text-anchor", "middle")
 			.attr("fill", "white")
-			.text(function(d){return d.data.value.toFixed(2);})
+			.text(function(d){return (100*d.data.value/total).toFixed(2)+ "%";})
 			.each(function(d) { this._current = d; }); // store the initial angles in current
 
-		// add percentage outside the arc
-		var perText = arcs.append("text")
-			.attr("id", "pertext")
-			.attr("transform", function(d){
-					return "translate(" + getTextLocation(d) + ")rotate(" + getRotationAngle(d) + ")";}) // move and rotate
-			.attr("dy", ".35em")
-			.attr("font-weight", "bold")
-			.attr("fill", "black")
-			.attr("text-anchor", function(d){return getTextAnchor(d);})
-			.text(function(d){return (100*d.data.value/total).toFixed(2) + "%";});
+		// // add percentage outside the arc
+		// var perText = arcs.append("text")
+		// 	.attr("id", "pertext")
+		// 	.attr("transform", function(d){
+		// 			return "translate(" + getTextLocation(d) + ")rotate(" + getRotationAngle(d) + ")";}) // move and rotate
+		// 	.attr("dy", ".35em")
+		// 	.attr("font-weight", "bold")
+		// 	.attr("fill", "black")
+		// 	.attr("text-anchor", function(d){return getTextAnchor(d);})
+		// 	.text(function(d){return (100*d.data.value/total).toFixed(2) + "%";});
 
 		// add 
 		// add mouse events
@@ -295,24 +295,24 @@ function drawPieChart(inputData, inputWidth, inputHeight, pieId, lInputWidth, lI
 					.attr("transform", function(d){return "translate(" + arc.centroid(d) + ")rotate(" + getRotationAngle(d)  + ")";}) // move and rotate
 					.text(function(d){
 					if (d.data.enabled){
-						return d.data.value.toFixed(2);
-					}else{
-						return "";}
-					});
-
-			svg.selectAll("#pertext")
-				.data(pie(data))
-				.transition()
-				.duration(750)
-					.attr("transform", function(d){
-					return "translate(" + getTextLocation(d) + ")rotate(" + getRotationAngle(d) + ")";}) // move and rotate
-				.attr("text-anchor", function(d){return getTextAnchor(d);})
-				.text(function(d){
-					if (d.data.enabled){
 						return (100*d.data.value/total).toFixed(2) + "%";
 					}else{
 						return "";}
 					});
+
+			// svg.selectAll("#pertext")
+			// 	.data(pie(data))
+			// 	.transition()
+			// 	.duration(750)
+			// 		.attr("transform", function(d){
+			// 		return "translate(" + getTextLocation(d) + ")rotate(" + getRotationAngle(d) + ")";}) // move and rotate
+			// 	.attr("text-anchor", function(d){return getTextAnchor(d);})
+			// 	.text(function(d){
+			// 		if (d.data.enabled){
+			// 			return (100*d.data.value/total).toFixed(2) + "%";
+			// 		}else{
+			// 			return "";}
+			// 		});
 		}
 }
 
@@ -326,6 +326,7 @@ function prepareDataForPieChart(data) {
 		dd.enabled = true;
 		return dd;
 		});
+	
 
 	return outputdata;
 }

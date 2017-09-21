@@ -132,7 +132,7 @@
 	                       	</div>
 	                	</div>
 	                </div>	                
-	               	<div id="dynamicTitle" class="col-xs-12" style="tex-float:right, font-size:14px, font-weight: bold">
+	               	<div id="dynamicTitle" class="col-xs-12" style="text-float:right, font-size:14px, font-weight: bold">
 	                    <!-- <h5> Base Case vs Selected Case</h5> -->
 	                </div> 
 	                <div id="piechart" class="col-xs-12 piechart">
@@ -152,7 +152,7 @@
 	            <div class="footer navbar-fixed-bottom">
 	            <hr>
 	                <p>
-	                    � Copyright 2015 CORE studio | Thornton Tomasetti |
+	                    Copyright 2015 CORE studio | Thornton Tomasetti |
 	                    <a href="http://core.thorntontomasetti.com/about" target="_blank"> About</a> | 
 	                    <a href="http://core.thorntontomasetti.com/about/services" target="_blank">Services</a> | 
 	                    <a href="http://core.thorntontomasetti.com/about/contact" target="_blank">Contact</a> |
@@ -194,7 +194,7 @@
 				var loadsPeakDataString = "Case Description, Misc. Equip(kBtu), Ambient Lights(kBtu), Space Cooling(kBtu), Space Heating(kBtu), Heat Rejection(kBtu), Pumps&Aux(kBtu), Ventilation Fans(kBtu), Heat Pumps(kBtu), DHW(kBtu), Exterior Lights(kBtu)\n";
 				*/
 				var costString = "Case Description, Electric, Fuel\n";
-				var loadsDataString = "Case Description, Misc. Equip, Ambient Lights, Space Cooling, Space Heating, Heat Rejection, Pumps&Aux, Ventilation Fans, Heat Pumps, DHW, Exterior Lights\n";
+				var loadsDataString = "Case Description, Misc. Equip, Ambient Lights, Space Cooling, Space Heating, Heat Rejection, Pumps&Aux, Ventilation Fans, Heat Pumps, DHW, Exterior Lights,EUI KBTU/SF\n";
 				var loadsPeakDataString = "Case Description, Misc. Equip, Ambient Lights, Space Cooling, Space Heating, Heat Rejection, Pumps&Aux, Ventilation Fans, Heat Pumps, DHW, Exterior Lights\n";
 
 				var rows = e.target.result.split("\n");
@@ -205,6 +205,7 @@
 					alert("This file is not a standard eQuest parametric runs result file.")
 				
 				}else{
+					var sqfts =[];
 
 					for (var i = 5; i < rows.length; i++) {
 	                    var cells = rows[i].split(",");
@@ -231,20 +232,34 @@
 	                    	peakVentFans = (parseFloat(cells[31]) * 3.412).toFixed(2),
 	                    	peakHeatPumps = (parseFloat(cells[33]) * 3.412).toFixed(2),
 	                    	peakDHW = (parseFloat(cells[34]) * 3.412).toFixed(2),
-	                    	peakextLight = (parseFloat(cells[35]) * 3.412).toFixed(2);
-	                    	
+	                    	peakextLight = (parseFloat(cells[35]) * 3.412).toFixed(2),
+							sourceTotal = (parseFloat(cells[62]) * 1000).toFixed(2),
+							sourceEUI = parseFloat(cells[63]).toFixed(2);
+
+	                    var sqft = sourceTotal/sourceEUI;
+						var totalEUI =(d3.sum([miscEquip, ambientLight, spaceCooling, spaceHeating, heatRejection, pumpsAux, ventFans, heatPumps, DHW, extLight])*1000/sqft).toFixed(2);
+						
+						if(!isNaN(sqft)){
+							sqfts.push(sqft);
+						}
+
 	                    costString += [description, electricCost, fuelCost].join(",") + "\n";
-	                    loadsDataString += [description, miscEquip, ambientLight, spaceCooling, spaceHeating, heatRejection, pumpsAux, ventFans, heatPumps, DHW, extLight].join(",") + "\n";
+						loadsDataString += [description, miscEquip, ambientLight, spaceCooling, spaceHeating, heatRejection, pumpsAux, ventFans, heatPumps, DHW, extLight,totalEUI].join(",") + "\n";
+						// loadsDataStringWithEUI += [description, miscEquip, ambientLight, spaceCooling, spaceHeating, heatRejection, pumpsAux, ventFans, heatPumps, DHW, extLight,totalEUI].join(",") + "\n";
 	                    loadsPeakDataString += [description, peakMiscEquip, peakAmbientLight, peakSpaceCooling, peakSpaceHeating, peakHeatRejection, peakPumpsAux, peakVentFans, peakHeatPumps, peakDHW, peakextLight].join(",") + "\n";
-	                }
+					}
+					
+					var sum = sqfts.reduce((previous, current) => current += previous);
+					var avgSqft = sum / sqfts.length;
 	                
-	                return [costString, loadsDataString, loadsPeakDataString];
+	                return [costString, loadsDataString, loadsPeakDataString, avgSqft];
             	}
 			};
-		
+
 		var baseCasePiechartData,
 			baseCaseBarChartData,
-			baseDesignData;
+			baseDesignData,
+			SQFT;
 
 		window.onload = function() {
 			var fileInput = document.getElementById('csv-file');
@@ -266,6 +281,7 @@
 				var costDataString = loadDataStrings[0];
 				var loadsDataString = loadDataStrings[1];
 				var loadsPeakDataString = loadDataStrings[2];
+				SQFT = loadDataStrings[3];
 
 				// conver string to csv
 				costData = d3.csv.parse(costDataString);
@@ -283,18 +299,31 @@
 				peakLoadData = otherCases.concat(baseDesign);
 
 				// draw pie chart for base design
-				baseDesignData = loadData.filter(function(d){return d["Case Description"]=="Base Design"})[0];
+				var baseDesignData = loadData.filter(function(d){return (d["Case Description"]=="Base Design") })[0];
+				delete baseDesignData["EUI KBTU/SF "];
+				
 
 				// this is an ugly way to get the bug with bar chart fixed - I'm embaraased!
 				var baseDesignDataBk = JSON.parse( JSON.stringify(baseDesignData));
 				baseDesignDataBk["Case Description"] = "Base Design_1";
+				baseDesignDataBk = energyToEUIForBarChart(baseDesignDataBk);
 
-				baseCaseBarChartData = [baseDesignDataBk, loadData[0]];
+				var theFirstData =JSON.parse( JSON.stringify((loadData[1])));
+				delete theFirstData["EUI KBTU/SF "];
+				
+				theFirstData = energyToEUIForBarChart(theFirstData);
+
+				baseCaseBarChartData = [baseDesignDataBk,theFirstData];
 				// remove case name from data
 				baseCasePiechartData = {};
+				delete baseDesignData["sqft"];
+				delete theFirstData["sqft"];
 				d3.keys(baseDesignDataBk).forEach(function(d){
-					if (d!="Case Description") baseCasePiechartData[d] = baseDesignData[d];
+					if (d!="Case Description") {
+						baseCasePiechartData[d] = baseDesignData[d];
+					}
 				});
+				
 
 				// remove old graph if any
 				d3.select('#wrapper svg').remove();
@@ -312,9 +341,12 @@
 					if (d.length > textLength) textLength = d.length;
 				});
 
+				var dim = d3.keys(loadData);
+				
+
 				// get parallel coordinates
 				loadsGraph = d3.parcoords()('#wrapper')
-            		.data(loadData)
+					.data(loadData)
             			.margin({ top: 50, left: 4.2*textLength, bottom: 10, right: 0 })
             			.alpha(0.6)
             			.mode("queue")
@@ -323,7 +355,8 @@
             			.brushMode("1D-axes")  // enable brushing
             			.interactive()
             			.reorderable(); // make all the scales fixed
-            	
+				
+				// loadsGraph.yscale();
             	peakGraph = d3.parcoords()('#peakwrapper')
             		.data(peakLoadData)
             			.margin({ top: 50, left: 4.2*textLength, bottom: 10, right: 0 })
@@ -391,7 +424,6 @@
 				
 				// draw charts
 				drawPieChart(baseCasePiechartData, 420, 420, "#piechart", 200, 400, "#legend");
-				
 				drawBarChart(baseCaseBarChartData, 200, 390, "#barchart");
 
 				updateBarChart(); //to update the text
@@ -612,6 +644,23 @@
 			return [clicked, clickedCenPts]
 		}
 
+		function energyToEUIForBarChart(data){
+			var newData= {};
+			var sqft = SQFT;
+
+			d3.keys(data).forEach(function(d){
+				if(d=="Case Description"){
+					newData[d] = data[d];
+				}else if (d.trim()!="EUI KBTU/SF") {
+					newData[d] = data[d]*1000/sqft;
+				}
+			});
+
+			return newData;
+
+
+		}
+
 
 		function highlightLineOnClick(mouseClick, drawTooltip, graphKey){
 			
@@ -662,13 +711,13 @@
 				var selChartsData = {};
 				if (graphKey == 0){
 					d3.keys(clicked[0]).forEach(function(d){
-						if (d!="Case Description") selChartsData[d] = clicked[0][d];
+						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = clicked[0][d];
 					});
 				}
 				else
 				{
 					d3.keys(otherClicked[0]).forEach(function(d){
-						if (d!="Case Description") selChartsData[d] = otherClicked[0][d];
+						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = otherClicked[0][d];
 					});
 				}
 				
@@ -685,9 +734,10 @@
 
 				// replace data inside bar chart
 				if (graphKey == 0){
-					updateBarChartData(clicked[0]);
+					
+					updateBarChartData(energyToEUIForBarChart(clicked[0]));
 				}else{
-					updateBarChartData(otherClicked[0]);
+					updateBarChartData(energyToEUIForBarChart(otherClicked[0]));
 				}
 
 				change = updateBarChart();
@@ -695,6 +745,8 @@
 			}else{
 
 				//set it back to base case
+				// baseCasePieData ={};
+				// console.log(baseCasePieData);
 				var data = prepareDataForPieChart(baseCasePiechartData);
 				
 				//baseCasePiechartData
