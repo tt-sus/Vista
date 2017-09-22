@@ -28,7 +28,12 @@
           .scale(y)
           .orient("left")
           .tickFormat(d3.format(".2s"));
-      
+
+      d3.select(barId).append("p")
+      .attr("class","text-center")
+      .style("margin","30px 20px -20px 0px")
+      .text("EUI (KBTU/SQFT)");
+
       var svg = d3.select(barId).append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)

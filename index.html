@@ -120,7 +120,7 @@
 	        <div class="col-xs-3">
 	            <div class="row-fluid">
 	                <div id="barchart" class="col-xs-7 barchart">
-	                    <!-- <h1>Bar Chart</h1> -->
+						<!-- <h1>Bar Chart</h1> -->
 	                </div>
 	                <div id="legendwrapper" class="col-xs-5 legend">
 	            		<div class="row-fluid">
@@ -320,7 +320,7 @@
 				delete theFirstData["sqft"];
 				d3.keys(baseDesignDataBk).forEach(function(d){
 					if (d!="Case Description") {
-						baseCasePiechartData[d] = baseDesignData[d];
+						baseCasePiechartData[d] = baseDesignData[d]/SQFT*1000;
 					}
 				});
 				
@@ -711,13 +711,13 @@
 				var selChartsData = {};
 				if (graphKey == 0){
 					d3.keys(clicked[0]).forEach(function(d){
-						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = clicked[0][d];
+						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = clicked[0][d]/SQFT*1000;
 					});
 				}
 				else
 				{
 					d3.keys(otherClicked[0]).forEach(function(d){
-						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = otherClicked[0][d];
+						if (d!="Case Description" && d.trim()!="EUI KBTU/SF" && d.trim()!="sqft") selChartsData[d] = otherClicked[0][d]/SQFT*1000;
 					});
 				}
 				

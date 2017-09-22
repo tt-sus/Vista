@@ -67,7 +67,7 @@ function drawPieChart(inputData, inputWidth, inputHeight, pieId, lInputWidth, lI
 			.attr("dy", ".35em")
     		.style("text-anchor", "middle")
     		.attr("class", "dountTitleText")
-    		.text("TOTAL") // put Total as place holder
+    		.text("EUI") // put Total as place holder
     		.attr("transform", "translate(0,-10)"); // move to center and slightly up
 
 		// add text inside donut - first title
@@ -232,9 +232,11 @@ function drawPieChart(inputData, inputWidth, inputHeight, pieId, lInputWidth, lI
 						////////////////////////////////////////
 						// make chenges to the other two graphs
 						// get active dimensios to update parallel coordinate charts
-						var activeDimensions = ["Case Description"].concat(data.filter(function(d){return (d.enabled) ? 1 : 0}).map(function(d){return d.name}));
+						var PKactiveDimensions = ["Case Description"].concat(data.filter(function(d){return (d.enabled) ? 1 : 0}).map(function(d){return d.name}));
+						var activeDimensions =PKactiveDimensions.concat(["EUI KBTU/SF"]);
+						peakGraph.dimensions(PKactiveDimensions);
 						loadsGraph.dimensions(activeDimensions);
-						peakGraph.dimensions(activeDimensions);
+						
 						
 						// click label to activate coloring
 						loadsGraph.svg.selectAll(".dimension")
